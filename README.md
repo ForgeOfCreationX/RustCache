@@ -1,4 +1,15 @@
-# rustcache
+<p align="center">
+  <img src="./assets/project_banner.svg" alt="banner"/>
+</p>
+<p align="center">
+    <em>A fast, safe key-value store in Rust</em>
+</p>
+
+---
+
+**Documentation**: <a href="" target="_blank"> TBD </a>
+
+---
 
 A lightweight **Key-Value Data Store** built in Rust.  
 Designed for speed, safety, and modern multi-core systems.

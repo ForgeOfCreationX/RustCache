@@ -5,10 +5,12 @@ use tokio::signal;
 mod resp;
 mod db;
 mod commands;
+mod banner;
 
 use crate::resp::read_resp;
 use crate::db::{Database, start_expiry_reaper};
 use crate::commands::process_command;
+use crate::banner::build_banner;
 
 async fn handle_client(stream: TcpStream, db: Database) -> io::Result<()> {
     let (reader_half, mut writer_half) = stream.into_split();
@@ -39,7 +41,9 @@ async fn handle_client(stream: TcpStream, db: Database) -> io::Result<()> {
 async fn main() -> io::Result<()> {
     let addr = std::env::var("RUSTCACHE_ADDR").unwrap_or_else(|_| "127.0.0.1:6379".to_string());
     let listener = TcpListener::bind(&addr).await?;
-    println!("RustCache server listening on {}", addr);
+    // Determine the bound address to display the correct port
+    let local_addr = listener.local_addr()?;
+    println!("{}", build_banner(local_addr));
 
     let db = Database::new();
     start_expiry_reaper(db.clone()).await;

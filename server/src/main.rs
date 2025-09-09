@@ -11,6 +11,7 @@ use crate::resp::read_resp;
 use crate::db::{Database, start_expiry_reaper};
 use crate::commands::process_command;
 use crate::banner::build_banner;
+use chrono::Local;
 
 async fn handle_client(stream: TcpStream, db: Database) -> io::Result<()> {
     let (reader_half, mut writer_half) = stream.into_split();
@@ -55,6 +56,9 @@ async fn main() -> io::Result<()> {
     // Determine the bound address to display the correct port
     let local_addr = listener.local_addr()?;
     println!("{}", build_banner(local_addr));
+    let now = Local::now();
+    let ts = now.format("%d %b %Y %H:%M:%S%.3f");
+    println!("{}:M {} * Server initialized", std::process::id(), ts);
 
     let db = Database::new();
     start_expiry_reaper(db.clone()).await;

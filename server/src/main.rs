@@ -39,7 +39,18 @@ async fn handle_client(stream: TcpStream, db: Database) -> io::Result<()> {
 
 #[tokio::main]
 async fn main() -> io::Result<()> {
-    let addr = std::env::var("RUSTCACHE_ADDR").unwrap_or_else(|_| "127.0.0.1:6379".to_string());
+    let _ = dotenvy::dotenv();
+    let addr = match std::env::var("ADDR").ok() {
+        Some(a) => a,
+        None => {
+            let port: u16 = std::env::var("PORT")
+                .ok()
+                .and_then(|s| s.parse::<u16>().ok())
+                .unwrap_or(9973);
+            format!("127.0.0.1:{}", port)
+        }
+    };
+    println!("{}", addr);
     let listener = TcpListener::bind(&addr).await?;
     // Determine the bound address to display the correct port
     let local_addr = listener.local_addr()?;

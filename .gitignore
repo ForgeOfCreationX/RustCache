@@ -1,0 +1,31 @@
+
+# Cargo artifacts
+/target/
+
+# Ignore Cargo.lock in libraries, but keep it in applications
+# Cargo.lock
+
+# Temporary files from editors
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE/project files
+.idea/
+.vscode/
+*.iml
+
+# Logs
+*.log
+
+# Backup files
+*.bak
+*.tmp
+
+# Server/other build directories (if generated)
+server/**/*.log
+server/**/*.tmp

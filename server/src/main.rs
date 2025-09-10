@@ -51,7 +51,6 @@ async fn main() -> io::Result<()> {
             format!("127.0.0.1:{}", port)
         }
     };
-    println!("{}", addr);
     let listener = TcpListener::bind(&addr).await?;
     // Determine the bound address to display the correct port
     let local_addr = listener.local_addr()?;

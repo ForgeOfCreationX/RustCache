@@ -5,6 +5,8 @@ use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader};
 use tokio::net::TcpStream;
 use futures::future::BoxFuture;
 use futures::FutureExt;
+use rustyline::DefaultEditor;
+use rustyline::error::ReadlineError;
 
 #[derive(Debug, Clone)]
 enum RespValue {
@@ -167,7 +169,7 @@ fn format_resp(resp: &RespValue) -> String {
 #[command(about = "RustCache CLI (redis-cli like)", long_about = None)]
 struct Cli {
     /// Server address, e.g. 127.0.0.1:9973
-    #[arg(short = 'h', long = "host", default_value = "127.0.0.1")]
+    #[arg(short = 'H', long = "host", default_value = "127.0.0.1")]
     host: String,
 
     #[arg(short = 'p', long = "port", default_value = "9973")]
@@ -198,16 +200,31 @@ async fn main() -> Result<()> {
     let mut stream = TcpStream::connect(&addr).await?;
 
     if cli.cmd.is_empty() {
-        // Interactive REPL
-        let stdin = tokio::io::stdin();
-        let mut lines = BufReader::new(stdin).lines();
+        // Interactive REPL with line editing
         println!("Connected to {}. Type commands, Ctrl+D to quit.", addr);
-        while let Some(Ok(line)) = lines.next_line().await.transpose() {
-            if line.trim().is_empty() { continue; }
-            let parts: Vec<String> = shell_words::split(&line).unwrap_or_else(|_| line.split_whitespace().map(|s| s.to_string()).collect());
-            let frame = build_array_from_cli(&parts);
-            let resp = send_command(&mut stream, frame).await?;
-            println!("{}", format_resp(&resp));
+        let mut editor = DefaultEditor::new()?;
+
+        loop {
+            let prompt = format!("{}> ", addr);
+            match editor.readline(&prompt) {
+                Ok(line) => {
+                    let trimmed = line.trim();
+                    if trimmed.is_empty() { continue; }
+                    if trimmed.eq_ignore_ascii_case("exit") || trimmed.eq_ignore_ascii_case("quit") {
+                        break;
+                    }
+                    let parts: Vec<String> = shell_words::split(&line).unwrap_or_else(|_| line.split_whitespace().map(|s| s.to_string()).collect());
+                    let frame = build_array_from_cli(&parts);
+                    let resp = send_command(&mut stream, frame).await?;
+                    println!("{}", format_resp(&resp));
+                }
+                Err(ReadlineError::Eof) => break,
+                Err(ReadlineError::Interrupted) => break,
+                Err(err) => {
+                    eprintln!("readline error: {}", err);
+                    break;
+                }
+            }
         }
         Ok(())
     } else {
